@@ -19,8 +19,15 @@ library
                      , text         >= 1.0
                      , bytestring   >= 0.9
                      , shakespeare  >= 2.0
+                     , blaze-markup
   exposed-modules:     Yesod.Table
   default-extensions:  QuasiQuotes
                      , GeneralizedNewtypeDeriving
   hs-source-dirs:      src
   default-language:    Haskell2010
+
+executable example-exe
+  default-language: Haskell2010
+  main-is: main.hs
+  hs-source-dirs: example
+  build-depends: base, yesod-table, text, yesod-core >= 1.2, contravariant, warp

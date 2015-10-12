@@ -29,6 +29,9 @@
 module Yesod.Table 
   ( Table(..)
   , Column(..)
+  , build
+  , buildWithClasses
+  , buildWithAllClasses
   , buildBootstrap
   , singleton
   , widget
@@ -50,11 +53,11 @@ module Yesod.Table
 import Prelude hiding (mapM_,when,maybe,show,const)
 import Yesod.Core
 import Yesod.Core.Widget
-import Text.Hamlet (ToAttributes)
 import Data.Functor.Contravariant
 import Data.Functor.Contravariant.Divisible
 import Data.Sequence (Seq)
 import Data.Text (Text)
+import Text.Hamlet (attrsToHtml)
 import Data.ByteString (ByteString)
 import Data.Text.Encoding (decodeUtf8')
 import qualified Prelude as Prelude
@@ -259,29 +262,28 @@ buildWithAllClasses table thead tbody tr = build table' thead' tbody' tr'
 --   It creates a widget from the information. You will likely want to use
 --   'buildBootstrap', or create your own custom table function using this as a
 --   base.
-build :: ToAttributes p 
-      => p -- ^ table attributes
-      -> p -- ^ thead attributes
-      -> p -- ^ tbody attributes
-      -> p -- ^ tr attributes
+build :: [(Text, Text)] -- ^ table attributes
+      -> [(Text, Text)] -- ^ thead attributes
+      -> [(Text, Text)] -- ^ tbody attributes
+      -> [(Text, Text)] -- ^ tr attributes
       -> Table site a -> [a] -> WidgetT site IO ()
 build tableAttrs theadAttrs tbodyAttrs trAttrs (Table cols) vals = 
   table $ do
     thead $ mapM_ header cols
     tbody $ forM_ vals $ \val -> tr $ forM_ cols $ \col -> cell col val
   where table b  = asWidgetIO [whamlet|
-                     <table #{tableAttrs}>^{b}
+                     <table #{attrsToHtml tableAttrs}>^{b}
                    |]
         thead b  = asWidgetIO [whamlet|
-                     <thead #{theadAttrs}>
-                       <tr #{trAttrs}>
+                     <thead #{attrsToHtml theadAttrs}>
+                       <tr #{attrsToHtml trAttrs}>
                          ^{b}
                    |]
         tbody b  = asWidgetIO [whamlet|
-                     <tbody #{tbodyAttrs}>^{b}
+                     <tbody #{attrsToHtml tbodyAttrs}>^{b}
                    |]
         tr b     = asWidgetIO [whamlet|
-                     <tr #{trAttrs}>^{b}
+                     <tr #{attrsToHtml trAttrs}>^{b}
                    |]
 
 -- This function is used to constrain types so that

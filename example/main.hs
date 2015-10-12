@@ -9,7 +9,7 @@ import Data.Monoid
 import Data.Functor.Contravariant ((>$<))
 import Control.Applicative
 
-import Yesod
+import Yesod.Core
 import qualified Yesod.Table as Table
 import Yesod.Table (Table)
 import Network.Wai.Handler.Warp (run)
@@ -76,7 +76,7 @@ getRootR :: Handler Html
 getRootR = defaultLayout $ do
   addStylesheetRemote "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css"
   setTitle "Yesod Tables"
-  let p  = Table.buildBootstrap peopleTable people
+  let p  = Table.build [] [] [] [] peopleTable people
       d  = Table.buildBootstrap dogTable dogs
       pd = Table.buildBootstrap -- The (>$<) operator is from Data.Functor.Contravariant
              ((fst >$< peopleTable) <> (snd >$< dogTable))
