@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 {-| Table building library for yesod
 
     This library is intended to be brought in by a qualified import
@@ -48,6 +50,7 @@ module Yesod.Table
 import Prelude hiding (mapM_,when,maybe,show,const)
 import Yesod.Core
 import Yesod.Core.Widget
+import Text.Hamlet (ToAttributes)
 import Data.Functor.Contravariant
 import Data.Functor.Contravariant.Divisible
 import Data.Sequence (Seq)
@@ -227,22 +230,58 @@ bool name f ifFalse ifTrue = widget name $ \a -> if f a then ifTrue a else ifFal
 --   render correctly, but the classes will be renamed. I'm open to pull requests
 --   for supporting other common table formats out of the box.
 buildBootstrap :: Table site a -> [a] -> WidgetT site IO ()
-buildBootstrap (Table cols) vals = table $ do
-  thead $ mapM_ header cols
-  tbody $ forM_ vals $ \val -> tr $ forM_ cols $ \col -> cell col val
+buildBootstrap = buildWithClasses ["table", "table-striped"] []
+
+-- | Builds a table with a list of classes applied to the table and a list of
+--   classes applied to the tr elements.
+buildWithClasses :: [Text] -- ^ List of table classes
+                 -> [Text] -- ^ List of tr classes
+                 -> Table site a -> [a] -> WidgetT site IO ()
+buildWithClasses table tr = buildWithAllClasses table [] [] tr
+
+
+-- | Given a list of classes for the table, thead, tbody, and tr elements,
+--   this will render the table. A convenience function for 'build' that only
+--   handles adding class attributes to the elements.
+buildWithAllClasses :: [Text] -- ^ List of table classes
+                    -> [Text] -- ^ List of thead classes
+                    -> [Text] -- ^ List of tbody classes
+                    -> [Text] -- ^ List of tr classes
+                    -> Table site a -> [a] -> WidgetT site IO ()
+buildWithAllClasses table thead tbody tr = build table' thead' tbody' tr'
+  where
+    makeAttr :: Text -> (Text, Text)
+    makeAttr = (,) "class"
+    [table', thead', tbody', tr'] = map (map makeAttr) [table, thead, tbody, tr]
+
+-- | This function accepts a list of table attributes, thead attributes, tbody
+--   attributes, tr attributes, a table definition, and finally a list of data.
+--   It creates a widget from the information. You will likely want to use
+--   'buildBootstrap', or create your own custom table function using this as a
+--   base.
+build :: ToAttributes p 
+      => p -- ^ table attributes
+      -> p -- ^ thead attributes
+      -> p -- ^ tbody attributes
+      -> p -- ^ tr attributes
+      -> Table site a -> [a] -> WidgetT site IO ()
+build tableAttrs theadAttrs tbodyAttrs trAttrs (Table cols) vals = 
+  table $ do
+    thead $ mapM_ header cols
+    tbody $ forM_ vals $ \val -> tr $ forM_ cols $ \col -> cell col val
   where table b  = asWidgetIO [whamlet|
-                     <table.table.table-striped>^{b}
+                     <table #{tableAttrs}>^{b}
                    |]
         thead b  = asWidgetIO [whamlet|
-                     <thead>
-                       <tr>
+                     <thead #{theadAttrs}>
+                       <tr #{trAttrs}>
                          ^{b}
                    |]
         tbody b  = asWidgetIO [whamlet|
-                     <tbody>^{b}
+                     <tbody #{tbodyAttrs}>^{b}
                    |]
         tr b     = asWidgetIO [whamlet|
-                     <tr>^{b}
+                     <tr #{trAttrs}>^{b}
                    |]
 
 -- This function is used to constrain types so that
